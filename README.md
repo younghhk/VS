@@ -177,3 +177,41 @@ In plain language:
 - If we choose a reasonably high selection-probability threshold and avoid very complex models in each subsample, we can bound the expected number of spurious variables.
 - Stability selection is therefore not just a heuristic; it has a theoretical connection to controlling false discoveries.
 
+
+```
+res_lasso <- choose_lambda_for_stability(
+  dat      = dat,
+  y_var    = "Y",
+  method   = "lasso",
+  family   = "gaussian",
+  q_target = 20
+)
+
+res_lasso$lambda_stab   # λ to use in stability selection
+res_lasso$n_nonzero     # ~ number of vars selected at that λ
+```
+```
+res_enet <- choose_lambda_for_stability(
+  dat        = dat,
+  y_var      = "Y",
+  method     = "elastic_net",
+  alpha_enet = 0.5,      # 0.5 = 50% L1 + 50% L2
+  family     = "gaussian",
+  q_target   = 20
+)
+
+res_enet$lambda_stab
+res_enet$n_nonzero
+```
+
+```
+fit_sub <- glmnet(X_sub, Y_sub,
+                  alpha  = res_lasso$alpha,
+                  lambda = res_lasso$lambda_stab,
+                  family = res_lasso$family,
+                  standardize = TRUE)
+
+beta_sub <- coef(fit_sub)[-1, 1]   # exclude intercept
+selected_j <- which(beta_sub != 0)
+
+```
