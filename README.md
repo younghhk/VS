@@ -178,40 +178,109 @@ In plain language:
 - Stability selection is therefore not just a heuristic; it has a theoretical connection to controlling false discoveries.
 
 
-```
-res_lasso <- choose_lambda_for_stability(
-  dat      = dat,
-  y_var    = "Y",
-  method   = "lasso",
-  family   = "gaussian",
-  q_target = 20
+---
+# Example
+
+
+## Mode 1: **fix `q_target`** (expected vars per subsample)
+
+
+
+> “In each subsample, I want LASSO/ENet to select about **q** variables.”
+
+### What you need to specify
+
+Minimum you should set:
+
+```r
+res <- stability_select(
+  dat           = dat,
+  y_var         = "Y",
+  method        = "lasso",      # or "elastic_net"
+  family        = "gaussian",   # or "binomial", "cox", etc.
+  q_target      = 20,           # <- YOU fix this
+  pi_thr        = 0.6,          # selection prob threshold
+  B             = 100,          # number of subsamples
+  subsample_frac = 0.5,         # usually 0.5 for theory
+  seed          = 123           # for reproducibility
 )
+```
 
-res_lasso$lambda_stab   # λ to use in stability selection
-res_lasso$n_nonzero     # ~ number of vars selected at that λ
+You **do not** set `pfer_target` in this mode (leave it `NULL`).
+
+### What the function does internally
+
+1. Uses `q_target = 20` to pick a `lambda_stab` so that **each subsample** tends to select ~20 variables.
+2. Runs B subsamples with that fixed `lambda_stab`.
+3. For each variable (j), computes
+   [
+   \hat\pi_j = s_j / B
+   ]
+   where (s_j) = number of subsamples where variable (j) was selected.
+4. Keeps variables with (\hat\pi_j \ge \text{pi_thr}) (e.g. 0.6).
+
+### What you get back
+
+From that call:
+
+```r
+res$stable_vars   # variables deemed "stable"
+res$pi_hat        # selection probabilities (sorted)
+res$q_target      # the q you gave (e.g. 20)
+res$pi_thr        # the threshold you used
+res$p             # total number of candidate variables
+res$pfer_bound    # theoretical upper bound on expected #false positives
 ```
+
+So **yes**: even in “fixed q” mode, the function **always computes** the implied **PFER bound** using
+
+[
+\text{PFER} \le \frac{q^2}{(2,\text{pi_thr} - 1),p}
+]
+
+and returns it as `res$pfer_bound`.
+
+You can literally print it:
+
+```r
+res$pfer_bound
+# e.g. 0.8  (≈ “at most ~0.8 false positives in expectation” under assumptions)
 ```
-res_enet <- choose_lambda_for_stability(
-  dat        = dat,
-  y_var      = "Y",
-  method     = "elastic_net",
-  alpha_enet = 0.5,      # 0.5 = 50% L1 + 50% L2
-  family     = "gaussian",
-  q_target   = 20
+
+
+
+## Mode 2: **fix `pfer_target`**, let code choose `q_target`
+
+
+
+> “I want expected # of false positives ≤ 1 (or 2, etc).
+> Given my `pi_thr`, choose a safe q.”
+
+Example:
+
+```r
+res2 <- stability_select(
+  dat           = dat,
+  y_var         = "Y",
+  method        = "lasso",
+  family        = "gaussian",
+  pfer_target   = 1,      # <- YOU fix this
+  pi_thr        = 0.9,    # high threshold
+  B             = 100,
+  subsample_frac = 0.5,
+  seed          = 123
 )
-
-res_enet$lambda_stab
-res_enet$n_nonzero
 ```
 
-```
-fit_sub <- glmnet(X_sub, Y_sub,
-                  alpha  = res_lasso$alpha,
-                  lambda = res_lasso$lambda_stab,
-                  family = res_lasso$family,
-                  standardize = TRUE)
+Internally it:
 
-beta_sub <- coef(fit_sub)[-1, 1]   # exclude intercept
-selected_j <- which(beta_sub != 0)
+* Computes a **safe** `q_target` from
+  [
+  q_{\max} = \sqrt{\text{pfer_target} \times (2,\text{pi_thr} -1),p}
+  ]
+* Uses that q to choose `lambda_stab`,
+* Runs stability selection,
+* Returns **both**:
 
-```
+  * `res2$q_target` (derived q), and
+  * `res2$pfer_bound` (should be ≤ your target, up to rounding).
