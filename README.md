@@ -123,7 +123,7 @@ can all lead to **different sets of selected variables**, even when prediction e
 
 Stability selection is a way to **stabilize** variable selection by combining subsampling with LASSO/elastic net. The idea goes back to Meinshausen & Bühlmann (2010).
 
-### 1 Why LASSO / Elastic Net can be unstable
+## 1 Why LASSO / Elastic Net can be unstable
 
 LASSO and elastic net choose coefficients $\beta$ by minimizing a penalized loss, for example
 
@@ -138,7 +138,7 @@ Because the penalty boundary is sharp:
 
 Result: two analysts, using similar choices, may get **different variable sets**, even if both models predict reasonably well.
 
-### 2 Basic idea of stability selection
+## 2 Basic idea of stability selection
 
 Stability selection reduces this sensitivity by repeatedly fitting the model on random subsamples and keeping only variables that are selected consistently.
 
@@ -164,7 +164,7 @@ Interpretation:
 - Variables that appear only occasionally (e.g., 5–10% of the time) are treated as unstable and dropped.
 - Using a threshold around 0.6 is somewhat arbitrary but a reasonable starting point; higher thresholds give fewer, more conservative variables.
 
-### 3 Error control
+## 3 Error control
 
 The original stability selection theory links:
 
