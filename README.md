@@ -72,4 +72,48 @@ Meinshausen N, Bühlmann P. *Stability selection.* **Journal of the Royal Statis
 [https://doi.org/10.1111/j.1467-9868.2010.00740.x](https://doi.org/10.1111/j.1467-9868.2010.00740.x)
 
 
+---
+
+## Group LASSO: Brief Overview
+
+Group LASSO extends LASSO to situations where predictors naturally belong to **groups**—for example:
+
+* metabolites within the same biochemical pathway
+* SNPs within a gene
+* repeated measures of the same exposure
+* correlated biomarkers from the same assay platform
+
+### What it does
+
+Instead of penalizing each coefficient separately, group LASSO applies a penalty to the **entire group** of coefficients. As a result:
+
+* **Groups are selected or removed as a whole**
+* Works well when predictors within a group are **correlated**
+* Encourages **biologically coherent** variable selection
+
+Mathematically, the penalty is:
+
+$$
+\lambda \sum_{g=1}^{G} |\beta_g|_2,
+$$
+
+which shrinks an entire group of coefficients to zero if the evidence for the group is weak.
+
+### When it is useful in epidemiologic studies
+
+Group LASSO is helpful when:
+
+* scientific knowledge defines meaningful groups (pathways, genes, chemical classes)
+* strong correlation occurs within groups
+* interest lies in **process-level** or **pathway-level** signals, not individual variables
+* you want more stable selection than standard LASSO, which may pick one variable and drop the rest
+
+### Limitations
+
+* All-or-none selection: it does **not** pick individual predictors within a group
+* Requires pre-defined groups
+* Coefficients remain biased toward zero, so refitting models after selection may help with interpretation
+
+
+---
 
