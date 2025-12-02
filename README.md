@@ -48,24 +48,22 @@ Because all coefficients are shrunk toward zero, weak but true signals may be mi
 ---
 
 ## 3. Stability Selection
+A method to identify variables that are selected consistently across many model fits.
 
-*A method to identify variables that are selected consistently*
+Stability selection improves reproducibility by combining repeated subsampling with penalized regression methods such as LASSO or elastic net.
 
-Stability selection improves reproducibility by combining subsampling with penalized regression.
+### Process
+You draw many random subsamples from the dataset. Subsample sizes often fall between 60% and 80%. This keeps each subsample informative while still introducing variability. These values are examples, not strict rules.
 
-Process:
+For each subsample, you fit a penalized regression model. Elastic net is often used when variables are correlated. Alpha values such as 0.3, 0.5, or 0.7 are common examples used to balance sparsity and grouping.
 
-1. Take many random subsamples of the data.
-2. Fit LASSO or elastic net to each subsample.
-3. Count how often each variable is selected.
+Lambda is chosen by cross validation within each subsample. Many analyses use 5- or 10-fold cross validation, and choosing the lambda that minimizes the cross validation error is a common approach. Smaller numbers of folds may be used when computation is a concern.
 
-Variables with high selection frequency are more likely to be robust, biologically meaningful predictors.
 
-### Why it helps
+The procedure is repeated many times. Running anywhere from 100 to 500 iterations is a common example range and allows selection frequencies to stabilize.
 
-* Reduces sensitivity to sampling noise.
-* Prioritizes reproducible biomarkers.
-* More reliable for interpretation than a single LASSO or elastic net fit.
+After all iterations, you calculate how often each variable has a nonzero coefficient. This is the selection frequency. Studies often explore thresholds in the range of 20% to 50% when identifying variables of interest. These values are guidelines rather than fixed cutoffs.
+
 
 
 ### Reference
